@@ -1,0 +1,18 @@
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "1.27.5-alpine"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi

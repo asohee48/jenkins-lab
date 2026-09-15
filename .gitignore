@@ -1,0 +1,8 @@
+# GitHub SCM 전환 전까지만 사용한 임시 파일
+nginx-lab-chart-configmap.yaml
+
+# 인증정보가 들어갈 수 있는 로컬 파일
+.env
+*.kubeconfig
+*.key
+*.pem

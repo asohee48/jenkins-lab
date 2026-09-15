@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nginx-lab
+description: Jenkins와 Helm 배포 실습용 nginx 애플리케이션
+type: application
+version: 0.1.0
+appVersion: "1.27.5"

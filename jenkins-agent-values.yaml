@@ -1,0 +1,2 @@
+agent:
+  serviceAccount: jenkins-deployer
