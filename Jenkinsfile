@@ -17,6 +17,14 @@ spec:
         }
     }
 
+    parameters {
+        booleanParam(
+            name: 'SIMULATE_FAILURE',
+            defaultValue: false,
+            description: '존재하지 않는 nginx 이미지 태그를 사용해 Deploy Stage 실패를 재현합니다.'
+        )
+    }
+
     stages {
         stage('Validate') {
             steps {
@@ -40,12 +48,18 @@ spec:
         stage('Deploy') {
             steps {
                 container('k8s-tools') {
-                    sh '''
-                        helm upgrade --install lab-nginx ./nginx-lab \
-                          --namespace jenkins-lab \
-                          --wait \
-                          --timeout 3m
-                    '''
+                    script {
+                        def imageOverride = params.SIMULATE_FAILURE ? '--set-string image.tag=step-11-image-does-not-exist' : ''
+
+                        sh """
+                            helm upgrade --install lab-nginx ./nginx-lab \\
+                              --namespace jenkins-lab \\
+                              --reset-values \\
+                              ${imageOverride} \\
+                              --wait \\
+                              --timeout 3m
+                        """
+                    }
                 }
             }
         }
@@ -63,6 +77,33 @@ spec:
                           --selector app.kubernetes.io/instance=lab-nginx
                     '''
                 }
+            }
+        }
+    }
+
+    post {
+        failure {
+            container('k8s-tools') {
+                sh '''
+                    echo '=== Helm release status ==='
+                    helm status lab-nginx --namespace jenkins-lab || true
+
+                    echo '=== Kubernetes workloads ==='
+                    kubectl get deployment,pod \
+                      --namespace jenkins-lab \
+                      --selector app.kubernetes.io/instance=lab-nginx \
+                      -o wide || true
+
+                    echo '=== Pod details ==='
+                    kubectl describe pod \
+                      --namespace jenkins-lab \
+                      --selector app.kubernetes.io/instance=lab-nginx || true
+
+                    echo '=== Recent namespace events ==='
+                    kubectl get events \
+                      --namespace jenkins-lab \
+                      --sort-by=.lastTimestamp | tail -n 30 || true
+                '''
             }
         }
     }
